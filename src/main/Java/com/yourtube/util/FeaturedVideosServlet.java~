@@ -1,0 +1,162 @@
+package com.yourtube.util;
+
+import javax.servlet.*;
+import javax.servlet.http.*;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.util.*;
+import java.sql.*;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
+
+public class FeaturedVideosServlet extends HttpServlet {
+
+    // Database connection setup (Make sure to replace with your actual database credentials)
+    private static final String DB_URL = "jdbc:mysql://127.0.0.1:3306/video_app";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "Lahari@321";
+
+    // YouTube API key (replace with your actual YouTube API key)
+    private static final String API_KEY = "";
+
+    // Video object to hold video details
+    public static class Video {
+        private String videoId;
+        private String title;
+        private String description;
+        private String embedUrl;
+
+        public Video(String videoId, String title, String description, String embedUrl) {
+            this.videoId = videoId;
+            this.title = title;
+            this.description = description;
+            this.embedUrl = embedUrl;
+        }
+
+        public String getVideoId() {
+            return videoId;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getEmbedUrl() {
+            return embedUrl;
+        }
+    }
+
+    // Helper method to make an API call to YouTube Data API
+    private JsonObject getYouTubeVideoDetails(String videoId) throws IOException {
+        String url = "https://www.googleapis.com/youtube/v3/videos?id=" + videoId + "&key=" + API_KEY + "&part=snippet";
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setRequestMethod("GET");
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        StringBuilder response = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            response.append(line);
+        }
+        reader.close();
+
+        JsonObject jsonResponse = JsonParser.parseString(response.toString()).getAsJsonObject();
+        JsonArray items = jsonResponse.getAsJsonArray("items");
+
+        if (items.size() > 0) {
+            JsonObject videoSnippet = items.get(0).getAsJsonObject().getAsJsonObject("snippet");
+            String title = videoSnippet.get("title").getAsString();
+            String description = videoSnippet.get("description").getAsString();
+            String embedUrl = "https://www.youtube.com/embed/" + videoId;
+            JsonObject videoDetails = new JsonObject();
+            videoDetails.addProperty("videoId", videoId);
+            videoDetails.addProperty("title", title);
+            videoDetails.addProperty("description", description);
+            videoDetails.addProperty("embedUrl", embedUrl);
+            return videoDetails;
+        } else {
+            return null;
+        }
+    }
+
+    // Helper method to insert video details into the database
+    private void saveVideoToDatabase(Video video) throws SQLException {
+        String sql = "INSERT INTO featured_videos (video_id, title, description, embed_url) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, video.getVideoId());
+            stmt.setString(2, video.getTitle());
+            stmt.setString(3, video.getDescription());
+            stmt.setString(4, video.getEmbedUrl());
+            stmt.executeUpdate();
+        }
+    }
+
+    // Helper method to get featured videos from database
+    private List<Video> getFeaturedVideosFromDatabase() throws SQLException {
+        List<Video> videos = new ArrayList<>();
+        String sql = "SELECT * FROM featured_videos";
+        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                String videoId = rs.getString("video_id");
+                String title = rs.getString("title");
+                String description = rs.getString("description");
+                String embedUrl = rs.getString("embed_url");
+                videos.add(new Video(videoId, title, description, embedUrl));
+            }
+        }
+        return videos;
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // List of featured video IDs (could be dynamically updated or fetched from elsewhere)
+        List<String> videoIds = Arrays.asList("g-fmCxT3HNA", "b5l5UodFzMo", "9_5wHw6l11o");
+
+        // Create a list to hold the video details
+        List<Video> featuredVideos = new ArrayList<>();
+
+        // For each video ID, fetch details using YouTube API and store in DB if not already present
+        for (String videoId : videoIds) {
+            try {
+                // Check if the video is already in the database
+                List<Video> existingVideos = getFeaturedVideosFromDatabase();
+                boolean exists = existingVideos.stream().anyMatch(v -> v.getVideoId().equals(videoId));
+                if (!exists) {
+                    // Fetch details from the YouTube API
+                    JsonObject videoDetails = getYouTubeVideoDetails(videoId);
+                    if (videoDetails != null) {
+                        String title = videoDetails.get("title").getAsString();
+                        String description = videoDetails.get("description").getAsString();
+                        String embedUrl = videoDetails.get("embedUrl").getAsString();
+                        Video video = new Video(videoId, title, description, embedUrl);
+                        saveVideoToDatabase(video);
+                        featuredVideos.add(video);
+                    }
+                } else {
+                    // If the video exists, just add to the list from DB
+                    featuredVideos.addAll(existingVideos);
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Set the list of featured videos as a request attribute
+        request.setAttribute("featuredVideosList", featuredVideos);
+
+        // Forward the request to the homepage JSP to display the featured videos
+        RequestDispatcher dispatcher = request.getRequestDispatcher("index.jsp");
+        dispatcher.forward(request, response);
+    }
+}
