@@ -1,4 +1,4 @@
-# YourTube: Video Playback and Comments Application
+# Video Playback and Comments Application
 
 Welcome to **YourTube**, a video playback and comments web application that allows users to:
 - Watch videos seamlessly via YouTube embed.
@@ -26,46 +26,6 @@ This project implements the **DAO design pattern** for efficient and maintainabl
 - **Servlets**: Handling HTTP requests and responses.
 - **MySQL**: Database for storing comments and video metadata. 
 - **Bootstrap**: Responsive UI design. 
-
----
-
-## Project Structure
-```
-YourTube/
-├── src/
-   └── main/
-       ├── Java/
-       │   └── com.yourtube.util/
-       │       ├── DBConnection.java
-       │       ├── HomeServlet.java
-       │       ├── LikeVideosServlet.java
-       │       ├── LoginServlet.java
-       │       ├── RegisterServlet.java
-       │       ├── SearchServlet.java
-       │       ├── VideoDAO.java
-       │       ├── VideoDetails.java
-       │       ├── VideoPlaybackServlet.java
-       │       ├── WatchLaterServlet.java
-       │       └── YouTubeService.java
-       └── webapp/
-           ├── images/
-           └── WEB-INF/
-               ├── web.xml
-               ├── error.jsp
-               ├── home.jsp
-               ├── index.jsp
-               ├── liked-videos.jsp
-               ├── login.jsp
-               ├── profile.jsp
-               ├── register.jsp
-               ├── SearchResults.jsp
-               ├── videoplayback.jsp
-               ├── watch-history.jsp
-               └── watch-later.jsp
-
-
-
-```
 
 ---
 
@@ -142,29 +102,6 @@ Contributions are welcome! Please:
 2. Create a new branch for your feature/bugfix.
 3. Submit a pull request with detailed notes.
 
-
----
-
-## Screenshots
-
-### Register
-![Screenshot (8)](https://github.com/user-attachments/assets/3dc91855-a51c-40ed-adc0-dc7b041d7bba)
-
-### Login
-![Screenshot (7)](https://github.com/user-attachments/assets/fbd8c889-2b30-4854-b111-bd282759319a)
-
-### Home Page
-![Screenshot (1)](https://github.com/user-attachments/assets/d27981af-5645-41e1-8b8d-47a1106303e0)
-![Screenshot (2)](https://github.com/user-attachments/assets/25499833-59e2-4d88-83f9-ccdd591c34b4)
-
-### Search Results
-![Screenshot (3)](https://github.com/user-attachments/assets/b95634e8-e24b-41d9-a397-f9b226e2f117)
-
-### Video Playback
-![Screenshot (4)](https://github.com/user-attachments/assets/9c03ee53-837e-49c5-8fd7-c07ba780a1f6)
-
-### Watch History
-![Screenshot (5)](https://github.com/user-attachments/assets/b180153b-e1fe-4360-b4e0-93bc32d2476a)
 
 ---
 
